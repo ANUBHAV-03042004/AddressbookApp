@@ -26,6 +26,13 @@ public class AddressBookController {
 		Contact newContact= addressBookService.addContact(contactDTO);
 		return new ResponseEntity<>(newContact, HttpStatus.CREATED);
 	}
- 
+// read contacts
+	@GetMapping("/getcontacts")
+	public ResponseEntity<List<ContactDTO>> getAllContacts() {
+		List<ContactDTO> contacts= addressBookService.getAllContacts();
+		return new ResponseEntity<>(contacts, HttpStatus.OK);
+	}
+	
+
 	
 }

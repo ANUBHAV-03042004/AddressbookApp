@@ -19,7 +19,16 @@ public class AddressBookService {
 		contacts.add(newContact);
 		return newContact;
 	}
- 
+// read contacts
+	public List<ContactDTO> getAllContacts() {
+		List<ContactDTO> contactDTOs= new ArrayList<>();
+		for (Contact contact:contacts) {
+			contactDTOs.add(toDTO(contact));
+		}
+		return contactDTOs;
+	}
+	
+
 	
 	private Contact toEntity(ContactDTO contactDTO) {
 		return new Contact(
