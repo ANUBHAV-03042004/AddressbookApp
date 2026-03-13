@@ -6,23 +6,23 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.addressbook.DTO.ContactDTO;
-import com.addressbook.Entity.Contact;
+import com.addressbook.Entity.ContactEntity;
 
 @Service
-public class AddressBookService {
+public class AddressbookService {
 	
-	List<Contact> contacts= new ArrayList<>();
+	List<ContactEntity> contacts= new ArrayList<>();
 	 
-	public Contact addContact(ContactDTO contactDTO) {
-		Contact newContact= toEntity(contactDTO);
+	public ContactEntity addContact(ContactDTO contactDTO) {
+		ContactEntity newContact= toEntity(contactDTO);
 		newContact.setId(contacts.size()+1);
 		contacts.add(newContact);
 		return newContact;
 	}
  
 	
-	private Contact toEntity(ContactDTO contactDTO) {
-		return new Contact(
+	private ContactEntity toEntity(ContactDTO contactDTO) {
+		return new ContactEntity(
 				contactDTO.getFirstName(),
 				contactDTO.getLastName(),
 				contactDTO.getAddress(),
@@ -34,7 +34,7 @@ public class AddressBookService {
 		);
 	}
 	
-	private ContactDTO toDTO(Contact contact) {
+	private ContactDTO toDTO(ContactEntity contact) {
 		ContactDTO dto= new ContactDTO();
 		dto.setFirstName(contact.getFirstName());
 		dto.setLastName(contact.getLastName());
