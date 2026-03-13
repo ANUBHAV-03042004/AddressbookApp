@@ -28,7 +28,24 @@ public class AddressBookService {
 		return contactDTOs;
 	}
 	
-
+// edit a contact
+	public Contact editContact(String firstName, String lastName, ContactDTO contactDTO) {
+		for (Contact contact:contacts) {
+			if (contact.getFirstName().equalsIgnoreCase(firstName) && contact.getLastName().equalsIgnoreCase(lastName)) {
+				contact.setFirstName(contactDTO.getFirstName());
+				contact.setLastName(contactDTO.getLastName());
+				contact.setAddress(contactDTO.getAddress());
+				contact.setCity(contactDTO.getCity());
+				contact.setState(contactDTO.getState());
+				contact.setZip(contactDTO.getZip());
+				contact.setPhoneNumber(contactDTO.getPhoneNumber());
+				contact.setEmail(contactDTO.getEmail());
+				return contact;
+			}
+		}
+		return null;
+	}
+	
 	
 	private Contact toEntity(ContactDTO contactDTO) {
 		return new Contact(

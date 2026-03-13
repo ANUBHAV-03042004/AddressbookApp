@@ -32,6 +32,15 @@ public class AddressBookController {
 		List<ContactDTO> contacts= addressBookService.getAllContacts();
 		return new ResponseEntity<>(contacts, HttpStatus.OK);
 	}
+//	 edit a contact
+	@PostMapping("/updatecontact/{firstName}/{lastName}")
+	public ResponseEntity<ContactDTO> editContact(@PathVariable String firstName, @PathVariable String lastName, @RequestBody ContactDTO contactDTO){
+		Contact updateCon= addressBookService.editContact(firstName, lastName, contactDTO);
+		if (updateCon == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);			
+		}
+		return new ResponseEntity<>(contactDTO, HttpStatus.OK);
+	}
 	
 
 	
