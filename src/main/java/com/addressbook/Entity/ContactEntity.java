@@ -1,6 +1,6 @@
 package com.addressbook.Entity;
 
-public class Contact {
+public class ContactEntity {
 	
 	private long id;
 	private String firstName;
@@ -12,11 +12,11 @@ public class Contact {
 	private String phoneNumber;
 	private String email;
 	
-	public Contact() {
+	public ContactEntity() {
 		this("first_name_not_set","second_name_not_set","address_not_set","city_not_set","state_not_set","00000","000000000","email_not_set");
 	}
 	
-	public Contact(String firstName, String lastNmae, String address, String city, String state, String zip ,String phoneNumber, String email) {
+	public ContactEntity(String firstName, String lastNmae, String address, String city, String state, String zip ,String phoneNumber, String email) {
 		setFirstName(firstName);
 		setLastName(lastNmae);
 		setAddress(address);

@@ -6,15 +6,15 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.addressbook.DTO.ContactDTO;
-import com.addressbook.Entity.Contact;
+import com.addressbook.Entity.ContactEntity;
 
 @Service
-public class AddressBookService {
+public class AddressbookService {
 	
-	List<Contact> contacts= new ArrayList<>();
+	List<ContactEntity> contacts= new ArrayList<>();
 //	 add a new contact
-	public Contact addContact(ContactDTO contactDTO) {
-		Contact newContact= toEntity(contactDTO);
+	public ContactEntity addContact(ContactDTO contactDTO) {
+		ContactEntity newContact= toEntity(contactDTO);
 		newContact.setId(contacts.size()+1);
 		contacts.add(newContact);
 		return newContact;
@@ -22,15 +22,15 @@ public class AddressBookService {
 // read contacts
 	public List<ContactDTO> getAllContacts() {
 		List<ContactDTO> contactDTOs= new ArrayList<>();
-		for (Contact contact:contacts) {
+		for (ContactEntity contact:contacts) {
 			contactDTOs.add(toDTO(contact));
 		}
 		return contactDTOs;
 	}
 	
 // edit a contact
-	public Contact editContact(String firstName, String lastName, ContactDTO contactDTO) {
-		for (Contact contact:contacts) {
+	public ContactEntity editContact(String firstName, String lastName, ContactDTO contactDTO) {
+		for (ContactEntity contact:contacts) {
 			if (contact.getFirstName().equalsIgnoreCase(firstName) && contact.getLastName().equalsIgnoreCase(lastName)) {
 				contact.setFirstName(contactDTO.getFirstName());
 				contact.setLastName(contactDTO.getLastName());
@@ -51,8 +51,8 @@ public class AddressBookService {
 		return removedCheck;
 	}
 	
-	private Contact toEntity(ContactDTO contactDTO) {
-		return new Contact(
+	private ContactEntity toEntity(ContactDTO contactDTO) {
+		return new ContactEntity(
 				contactDTO.getFirstName(),
 				contactDTO.getLastName(),
 				contactDTO.getAddress(),
@@ -64,7 +64,7 @@ public class AddressBookService {
 		);
 	}
 	
-	private ContactDTO toDTO(Contact contact) {
+	private ContactDTO toDTO(ContactEntity contact) {
 		ContactDTO dto= new ContactDTO();
 		dto.setFirstName(contact.getFirstName());
 		dto.setLastName(contact.getLastName());
