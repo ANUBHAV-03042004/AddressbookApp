@@ -12,7 +12,7 @@ import com.addressbook.Entity.Contact;
 public class AddressBookService {
 	
 	List<Contact> contacts= new ArrayList<>();
-	 
+//	 add a new contact
 	public Contact addContact(ContactDTO contactDTO) {
 		Contact newContact= toEntity(contactDTO);
 		newContact.setId(contacts.size()+1);

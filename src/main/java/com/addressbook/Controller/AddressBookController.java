@@ -20,7 +20,7 @@ public class AddressBookController {
 
 	@Autowired
 	AddressBookService addressBookService;
-	
+//	add a new contact
 	@PostMapping("/addcontact")
 	public ResponseEntity<Contact> addContact(@RequestBody ContactDTO contactDTO) {
 		Contact newContact= addressBookService.addContact(contactDTO);
