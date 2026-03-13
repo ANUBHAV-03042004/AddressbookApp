@@ -41,6 +41,18 @@ public class AddressBookController {
 		}
 		return new ResponseEntity<>(contactDTO, HttpStatus.OK);
 	}
+//	to delete a person
+
+	@DeleteMapping("/deletecontact/{firstName}/{lastName}")
+	public ResponseEntity<String> deleteContact(@PathVariable String firstName, @PathVariable String lastName){
+		boolean deleteCheck= addressBookService.deleteContact(firstName, lastName);
+		if(deleteCheck) {
+			return new ResponseEntity<>("Contact deleted.", HttpStatus.OK);
+		}
+		else {
+			return new ResponseEntity<>("Contact not found", HttpStatus.NOT_FOUND);
+		}
+	}
 	
 
 	

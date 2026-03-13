@@ -45,7 +45,11 @@ public class AddressBookService {
 		}
 		return null;
 	}
-	
+
+	public boolean deleteContact(String firstName, String LastName) {
+		boolean removedCheck= contacts.removeIf(c-> c.getFirstName().equalsIgnoreCase(firstName) && c.getLastName().equalsIgnoreCase(LastName));
+		return removedCheck;
+	}
 	
 	private Contact toEntity(ContactDTO contactDTO) {
 		return new Contact(
