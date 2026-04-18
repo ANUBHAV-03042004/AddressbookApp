@@ -11,10 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 
 @RestController
 @RequestMapping("/api/addressbooks")
@@ -24,51 +25,48 @@ public class AddressBookController {
     @Autowired
     private AddressBookService addressBookService;
 
-    @Operation(summary = "Create a new Address Book", description = "Creates a new address book with the given name")
+    @Operation(summary = "Create a new Address Book")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Address book created successfully"),
-        @ApiResponse(responseCode = "409", description = "Address book with this name already exists")
+        @ApiResponse(responseCode = "201", description = "Address book created"),
+        @ApiResponse(responseCode = "409", description = "Name already in use by this user")
     })
     @PostMapping
     public ResponseEntity<ResponseDTO<AddressBook>> createAddressBook(
             @Parameter(description = "Name of the address book", required = true, example = "Friends")
-            @RequestParam String name) {
-        AddressBook created = addressBookService.createAddressBook(name);
+            @RequestParam String name,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        AddressBook created = addressBookService.createAddressBook(name, principal.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ResponseDTO<>("Address book created successfully", created));
     }
 
-    @Operation(summary = "Get all Address Books", description = "Returns a list of all address books")
-    @ApiResponse(responseCode = "200", description = "List of address books returned")
+    @Operation(summary = "Get all Address Books")
     @GetMapping
-    public ResponseEntity<ResponseDTO<List<AddressBook>>> getAllAddressBooks() {
-        List<AddressBook> books = addressBookService.getAllAddressBooks();
+    public ResponseEntity<ResponseDTO<List<AddressBook>>> getAllAddressBooks(
+            @AuthenticationPrincipal UserDetails principal) {
+
+        List<AddressBook> books = addressBookService.getAllAddressBooks(principal.getUsername());
         return ResponseEntity.ok(new ResponseDTO<>("All address books fetched", books));
     }
 
-    @Operation(summary = "Get Address Book by ID", description = "Returns a single address book by its ID")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Address book found"),
-        @ApiResponse(responseCode = "404", description = "Address book not found")
-    })
+    @Operation(summary = "Get Address Book by ID")
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO<AddressBook>> getAddressBookById(
-            @Parameter(description = "ID of the address book", required = true, example = "1")
-            @PathVariable Long id) {
-        AddressBook book = addressBookService.getAddressBookById(id);
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        AddressBook book = addressBookService.getAddressBookById(id, principal.getUsername());
         return ResponseEntity.ok(new ResponseDTO<>("Address book found", book));
     }
 
-    @Operation(summary = "Delete an Address Book", description = "Deletes the address book and all its contacts")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Address book deleted"),
-        @ApiResponse(responseCode = "404", description = "Address book not found")
-    })
+    @Operation(summary = "Delete an Address Book")
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDTO<String>> deleteAddressBook(
-            @Parameter(description = "ID of the address book to delete", required = true, example = "1")
-            @PathVariable Long id) {
-        addressBookService.deleteAddressBook(id);
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        addressBookService.deleteAddressBook(id, principal.getUsername());
         return ResponseEntity.ok(new ResponseDTO<>("Address book deleted successfully", null));
     }
 }

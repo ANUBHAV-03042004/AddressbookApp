@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +50,23 @@ public class GlobalExceptionHandler {
                 .body(new ResponseDTO<>("Validation failed", errors));
     }
 
+    /**
+     * FIX: Handle ResponseStatusException (thrown by /contacts/count when both
+     * params are missing). Without this, the bare Exception handler below would
+     * catch it and return 500 instead of the intended 400.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ResponseDTO<String>> handleResponseStatus(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode())
+                .body(new ResponseDTO<>(ex.getReason(), null));
+    }
+
+    /**
+     * Catch-all — kept as last resort but should rarely fire now that specific
+     * handlers cover all known cases. Note: Spring Security exceptions (401/403)
+     * are handled by the security filter chain BEFORE reaching this handler, so
+     * this will NOT accidentally swallow them.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseDTO<String>> handleGeneral(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

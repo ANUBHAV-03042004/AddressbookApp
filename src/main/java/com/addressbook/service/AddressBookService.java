@@ -15,38 +15,46 @@ public class AddressBookService {
     @Autowired
     private AddressBookRepository addressBookRepository;
 
-    // Create a new address book
-    public AddressBook createAddressBook(String name) {
-        if (addressBookRepository.existsByNameIgnoreCase(name)) {
-            throw new DuplicateAddressBookException("Address book '" + name + "' already exists.");
+    /** FIX: name uniqueness is now per-user, not global */
+    public AddressBook createAddressBook(String name, String owner) {
+        if (addressBookRepository.existsByNameIgnoreCaseAndOwner(name, owner)) {
+            throw new DuplicateAddressBookException(
+                    "You already have an address book named '" + name + "'.");
         }
         AddressBook book = new AddressBook();
         book.setName(name);
+        book.setOwner(owner);
         return addressBookRepository.save(book);
     }
 
-    // Get all address books
-    public List<AddressBook> getAllAddressBooks() {
-        return addressBookRepository.findAll();
+    /** FIX: returns only the caller's books */
+    public List<AddressBook> getAllAddressBooks(String owner) {
+        return addressBookRepository.findByOwner(owner);
     }
 
-    // Get by ID
+    /** FIX: enforces ownership — returns 404 if book belongs to another user */
+    public AddressBook getAddressBookById(Long id, String owner) {
+        return addressBookRepository.findByIdAndOwner(id, owner)
+                .orElseThrow(() -> new AddressBookNotFoundException(
+                        "Address book with ID " + id + " not found."));
+    }
+
+    /**
+     * Internal overload used by ContactService which already has a validated book.
+     * Do NOT expose this via a controller directly.
+     */
     public AddressBook getAddressBookById(Long id) {
         return addressBookRepository.findById(id)
-                .orElseThrow(() -> new AddressBookNotFoundException("Address book with ID " + id + " not found."));
+                .orElseThrow(() -> new AddressBookNotFoundException(
+                        "Address book with ID " + id + " not found."));
     }
 
-    // Get by name
-    public AddressBook getAddressBookByName(String name) {
-        return addressBookRepository.findByNameIgnoreCase(name)
-                .orElseThrow(() -> new AddressBookNotFoundException("Address book '" + name + "' not found."));
-    }
-
-    // Delete address book
-    public void deleteAddressBook(Long id) {
-        if (!addressBookRepository.existsById(id)) {
-            throw new AddressBookNotFoundException("Address book with ID " + id + " not found.");
-        }
-        addressBookRepository.deleteById(id);
+    /** FIX: ownership checked — prevents deleting another user's book */
+    public void deleteAddressBook(Long id, String owner) {
+        // FIX: single DB call instead of existsById + deleteById
+        AddressBook book = addressBookRepository.findByIdAndOwner(id, owner)
+                .orElseThrow(() -> new AddressBookNotFoundException(
+                        "Address book with ID " + id + " not found."));
+        addressBookRepository.delete(book);
     }
 }

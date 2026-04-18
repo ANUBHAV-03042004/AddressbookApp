@@ -47,7 +47,6 @@ public class Contact {
 
     public Contact() {}
 
-    // Getters
     public Long getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
@@ -59,7 +58,6 @@ public class Contact {
     public String getEmail() { return email; }
     public AddressBook getAddressBook() { return addressBook; }
 
-    // Setters
     public void setId(Long id) { this.id = id; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
@@ -71,18 +69,28 @@ public class Contact {
     public void setEmail(String email) { this.email = email; }
     public void setAddressBook(AddressBook addressBook) { this.addressBook = addressBook; }
 
+    /**
+     * FIX: Previous equals() only compared firstName+lastName, meaning two
+     * contacts with the same name in DIFFERENT address books were considered
+     * equal — causing false duplicate exceptions and broken Set semantics.
+     * Now the addressBook ID is included in identity.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        Contact contact = (Contact) obj;
-        return firstName.equalsIgnoreCase(contact.firstName) &&
-               lastName.equalsIgnoreCase(contact.lastName);
+        Contact other = (Contact) obj;
+        Long thisBookId  = this.addressBook  != null ? this.addressBook.getId()  : null;
+        Long otherBookId = other.addressBook != null ? other.addressBook.getId() : null;
+        return firstName.equalsIgnoreCase(other.firstName)
+                && lastName.equalsIgnoreCase(other.lastName)
+                && Objects.equals(thisBookId, otherBookId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(firstName.toLowerCase(), lastName.toLowerCase());
+        Long bookId = addressBook != null ? addressBook.getId() : null;
+        return Objects.hash(firstName.toLowerCase(), lastName.toLowerCase(), bookId);
     }
 
     @Override

@@ -21,12 +21,26 @@ public class ContactDTO {
     @NotBlank(message = "State is required")
     private String state;
 
-    @Pattern(regexp = "\\d{6}", message = "ZIP code must be exactly 6 digits")
+    /**
+     * FIX: @Pattern does NOT allow null by default — it only validates non-null values
+     * when combined with the constraint. But if the client sends an empty string ""
+     * the pattern \d{6} fails. Added explicit @Size(min=0) hint is unnecessary;
+     * the real fix is: these fields are optional so they MUST allow null.
+     * @Pattern already allows null (skips the check), so the bug was that
+     * the Angular form sent an empty string "" for blank fields — which fails
+     * the pattern. Backend must treat "" the same as null.
+     * Solution: strip empty strings to null in setters.
+     */
+    @Pattern(regexp = "^\\d{6}$", message = "ZIP code must be exactly 6 digits")
     private String zip;
 
-    @Pattern(regexp = "\\d{10}", message = "Phone number must be exactly 10 digits")
+    @Pattern(regexp = "^\\d{10}$", message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
 
+    /**
+     * FIX: @Email also allows null (skips check for null), but rejects empty string.
+     * Same empty-string-to-null treatment applied in setter.
+     */
     @Email(message = "Invalid email format")
     private String email;
 
@@ -40,9 +54,9 @@ public class ContactDTO {
         this.address = address;
         this.city = city;
         this.state = state;
-        this.zip = zip;
-        this.phoneNumber = phoneNumber;
-        this.email = email;
+        setZip(zip);
+        setPhoneNumber(phoneNumber);
+        setEmail(email);
     }
 
     public Long getId() { return id; }
@@ -64,13 +78,22 @@ public class ContactDTO {
     public void setState(String state) { this.state = state; }
 
     public String getZip() { return zip; }
-    public void setZip(String zip) { this.zip = zip; }
+    /** Coerce empty string → null so @Pattern validation is skipped for blank optional field. */
+    public void setZip(String zip) {
+        this.zip = (zip != null && zip.isBlank()) ? null : zip;
+    }
 
     public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    /** Coerce empty string → null so @Pattern validation is skipped for blank optional field. */
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = (phoneNumber != null && phoneNumber.isBlank()) ? null : phoneNumber;
+    }
 
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    /** Coerce empty string → null so @Email validation is skipped for blank optional field. */
+    public void setEmail(String email) {
+        this.email = (email != null && email.isBlank()) ? null : email;
+    }
 
     @Override
     public String toString() {

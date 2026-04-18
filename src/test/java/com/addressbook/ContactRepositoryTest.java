@@ -16,7 +16,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test 2 — Repository layer test for Contact
- * Tests all custom JPA query methods
+ * Tests all custom JPA query methods.
+ *
+ * FIX: AddressBook.owner is a non-nullable column (@Column(nullable = false)).
+ *      The previous setUp() created an AddressBook without an owner, which caused
+ *      a constraint-violation on save.  All AddressBook instances now set owner.
  */
 @DataJpaTest
 public class ContactRepositoryTest {
@@ -36,6 +40,7 @@ public class ContactRepositoryTest {
 
         book = new AddressBook();
         book.setName("TestBook");
+        book.setOwner("testuser"); // FIX: owner is non-nullable — must be set before save
         book = addressBookRepository.save(book);
     }
 

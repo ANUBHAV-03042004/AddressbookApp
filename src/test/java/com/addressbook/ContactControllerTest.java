@@ -12,17 +12,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Test 6 — Controller layer test for ContactController
- * Uses @WebMvcTest + MockMvc to test all REST endpoints
+ * Uses @WebMvcTest + MockMvc to test all REST endpoints.
+ *
+ * FIX: All endpoints require authentication (@AuthenticationPrincipal UserDetails).
+ *      Tests now use @WithMockUser to supply a principal (username = "testuser")
+ *      and csrf() post-processor on mutating requests so Spring Security
+ *      doesn't reject them with 401/403.
+ *
+ * FIX: Service mock stubs updated — addContact/getAllContacts/deleteContact now
+ *      accept an owner String as the last argument.  Use anyString() so the stub
+ *      matches regardless of what the controller passes from the principal.
  */
 @WebMvcTest(ContactController.class)
 public class ContactControllerTest {
@@ -53,12 +65,16 @@ public class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser") // FIX: supply authenticated principal
     void testAddContact_Returns201() throws Exception {
         // Arrange
-        when(contactService.addContact(eq(1L), any(ContactDTO.class))).thenReturn(sampleDTO);
+        // FIX: addContact(bookId, dto, owner) — match any owner string from principal
+        when(contactService.addContact(eq(1L), any(ContactDTO.class), anyString()))
+                .thenReturn(sampleDTO);
 
         // Act & Assert
         mockMvc.perform(post("/api/addressbooks/1/contacts")
+                        .with(csrf()) // FIX: CSRF token required for POST
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleDTO)))
                 .andExpect(status().isCreated())
@@ -68,23 +84,31 @@ public class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser") // FIX: supply authenticated principal
     void testAddContact_DuplicateReturns409() throws Exception {
         // Arrange
-        when(contactService.addContact(eq(1L), any(ContactDTO.class)))
-                .thenThrow(new DuplicateContactException("Contact 'Anubhav Sharma' already exists in this address book."));
+        // FIX: addContact now takes owner; use anyString()
+        when(contactService.addContact(eq(1L), any(ContactDTO.class), anyString()))
+                .thenThrow(new DuplicateContactException(
+                        "Contact 'Anubhav Sharma' already exists in this address book."));
 
         // Act & Assert
         mockMvc.perform(post("/api/addressbooks/1/contacts")
+                        .with(csrf()) // FIX: CSRF token required for POST
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleDTO)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Contact 'Anubhav Sharma' already exists in this address book."));
+                .andExpect(jsonPath("$.message")
+                        .value("Contact 'Anubhav Sharma' already exists in this address book."));
     }
 
     @Test
+    @WithMockUser(username = "testuser") // FIX: supply authenticated principal
     void testGetAllContacts_Returns200() throws Exception {
         // Arrange
-        when(contactService.getAllContacts(1L)).thenReturn(List.of(sampleDTO));
+        // FIX: getAllContacts(bookId, owner) — use anyString() for owner
+        when(contactService.getAllContacts(eq(1L), anyString()))
+                .thenReturn(List.of(sampleDTO));
 
         // Act & Assert
         mockMvc.perform(get("/api/addressbooks/1/contacts"))
@@ -94,8 +118,9 @@ public class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser") // FIX: supply authenticated principal
     void testGetContactById_NotFound_Returns404() throws Exception {
-        // Arrange
+        // Arrange — getContactById has no owner param; stub unchanged
         when(contactService.getContactById(999L))
                 .thenThrow(new ContactNotFoundException("Contact with ID 999 not found."));
 
@@ -106,19 +131,23 @@ public class ContactControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "testuser") // FIX: supply authenticated principal
     void testDeleteContact_Returns200() throws Exception {
         // Arrange
-        doNothing().when(contactService).deleteContact(1L, "Anubhav", "Sharma");
+        // FIX: deleteContact(bookId, firstName, lastName, owner) — use anyString() for owner
+        doNothing().when(contactService).deleteContact(eq(1L), eq("Anubhav"), eq("Sharma"), anyString());
 
         // Act & Assert
-        mockMvc.perform(delete("/api/addressbooks/1/contacts/Anubhav/Sharma"))
+        mockMvc.perform(delete("/api/addressbooks/1/contacts/Anubhav/Sharma")
+                        .with(csrf())) // FIX: CSRF token required for DELETE
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Contact deleted successfully"));
     }
 
     @Test
+    @WithMockUser(username = "testuser") // FIX: supply authenticated principal
     void testSearchByCity_Returns200() throws Exception {
-        // Arrange
+        // Arrange — searchByCity has no owner param; stub unchanged
         when(contactService.searchByCity("Mathura")).thenReturn(List.of(sampleDTO));
 
         // Act & Assert

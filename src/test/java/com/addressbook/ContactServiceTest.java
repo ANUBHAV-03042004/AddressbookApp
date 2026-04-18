@@ -40,11 +40,15 @@ public class ContactServiceTest {
     private AddressBook mockBook;
     private ContactDTO sampleDTO;
 
+    // FIX: owner is now required by all service methods that validate address book ownership
+    private static final String OWNER = "testuser";
+
     @BeforeEach
     void setUp() {
         mockBook = new AddressBook();
         mockBook.setId(1L);
         mockBook.setName("TestBook");
+        mockBook.setOwner(OWNER); // FIX: AddressBook.owner is a non-nullable column
 
         sampleDTO = new ContactDTO();
         sampleDTO.setFirstName("Anubhav");
@@ -60,7 +64,8 @@ public class ContactServiceTest {
     @Test
     void testAddContact_Success() {
         // Arrange
-        when(addressBookService.getAddressBookById(1L)).thenReturn(mockBook);
+        // FIX: addContact(bookId, dto, owner) — owner param now required
+        when(addressBookService.getAddressBookById(1L, OWNER)).thenReturn(mockBook);
         when(contactRepository.existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndAddressBookId(
                 "Anubhav", "Sharma", 1L)).thenReturn(false);
 
@@ -78,7 +83,7 @@ public class ContactServiceTest {
         when(contactRepository.save(any(Contact.class))).thenReturn(savedContact);
 
         // Act
-        ContactDTO result = contactService.addContact(1L, sampleDTO);
+        ContactDTO result = contactService.addContact(1L, sampleDTO, OWNER);
 
         // Assert
         assertNotNull(result);
@@ -90,19 +95,20 @@ public class ContactServiceTest {
     @Test
     void testAddContact_ThrowsDuplicateException() {
         // Arrange
-        when(addressBookService.getAddressBookById(1L)).thenReturn(mockBook);
+        // FIX: getAddressBookById now requires owner
+        when(addressBookService.getAddressBookById(1L, OWNER)).thenReturn(mockBook);
         when(contactRepository.existsByFirstNameIgnoreCaseAndLastNameIgnoreCaseAndAddressBookId(
                 "Anubhav", "Sharma", 1L)).thenReturn(true);
 
         // Act & Assert
         assertThrows(DuplicateContactException.class,
-                () -> contactService.addContact(1L, sampleDTO));
+                () -> contactService.addContact(1L, sampleDTO, OWNER));
         verify(contactRepository, never()).save(any());
     }
 
     @Test
     void testGetContactById_NotFound() {
-        // Arrange
+        // Arrange — getContactById does NOT take an owner param; no change needed
         when(contactRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -113,7 +119,8 @@ public class ContactServiceTest {
     @Test
     void testDeleteContact_Success() {
         // Arrange
-        when(addressBookService.getAddressBookById(1L)).thenReturn(mockBook);
+        // FIX: getAddressBookById now requires owner
+        when(addressBookService.getAddressBookById(1L, OWNER)).thenReturn(mockBook);
         Contact c = new Contact();
         c.setId(5L);
         c.setFirstName("Anubhav");
@@ -123,7 +130,8 @@ public class ContactServiceTest {
                 "Anubhav", "Sharma", 1L)).thenReturn(Optional.of(c));
 
         // Act
-        contactService.deleteContact(1L, "Anubhav", "Sharma");
+        // FIX: deleteContact(bookId, firstName, lastName, owner) — owner added
+        contactService.deleteContact(1L, "Anubhav", "Sharma", OWNER);
 
         // Assert
         verify(contactRepository, times(1)).delete(c);
@@ -132,7 +140,8 @@ public class ContactServiceTest {
     @Test
     void testGetAllContacts_ReturnsCorrectSize() {
         // Arrange
-        when(addressBookService.getAddressBookById(1L)).thenReturn(mockBook);
+        // FIX: getAllContacts(bookId, owner) — owner added
+        when(addressBookService.getAddressBookById(1L, OWNER)).thenReturn(mockBook);
 
         Contact c1 = new Contact(); c1.setFirstName("A"); c1.setLastName("B");
         c1.setAddress("x"); c1.setCity("y"); c1.setState("z");
@@ -147,7 +156,7 @@ public class ContactServiceTest {
         when(contactRepository.findByAddressBookId(1L)).thenReturn(List.of(c1, c2));
 
         // Act
-        List<ContactDTO> result = contactService.getAllContacts(1L);
+        List<ContactDTO> result = contactService.getAllContacts(1L, OWNER);
 
         // Assert
         assertEquals(2, result.size());
